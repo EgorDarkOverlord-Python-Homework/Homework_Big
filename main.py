@@ -51,16 +51,17 @@ def on_load_image_button_click():
         ),
     )
 
-    try:
-        global loaded_image
-        loaded_image = cv2.imdecode(
-            np.fromfile(path, dtype=np.uint8), cv2.IMREAD_UNCHANGED
-        )
-        global zoom
-        zoom = 1
-        set_image_to_label(image_label, loaded_image, zoom)
-    except Exception as e:
-        showerror("Ошибка", "Некорректный путь")
+    if path:
+        try:
+            global loaded_image
+            loaded_image = cv2.imdecode(
+                np.fromfile(path, dtype=np.uint8), cv2.IMREAD_UNCHANGED
+            )
+            global zoom
+            zoom = 1
+            set_image_to_label(image_label, loaded_image, zoom)
+        except Exception as e:
+            showerror("Ошибка", "Некорректный путь")
 
 
 def on_do_image_button_click():
@@ -101,7 +102,7 @@ def on_do_image_button_click():
             loaded_image = motion_blur(loaded_image, power, angle)
         else:
             showerror("Ошибка", "Выберите способ обработки изображения")
-    
+
         set_image_to_label(image_label, loaded_image, zoom)
     except ValueError as e:
         showerror("Ошибка", "Некорректно введённые данные")
@@ -120,13 +121,14 @@ def on_save_image_button_click():
             ("png files", "*.png"),            
         ),
     )
-
-    try:
-        format = f".{path.split('.')[-1]}"
-        is_success, im_buf_arr = cv2.imencode(ext=format, img=loaded_image)
-        im_buf_arr.tofile(path)
-    except Exception as e:
-        showerror("Ошибка", "Некорректный путь")
+    
+    if path:
+        try:
+            format = f".{path.split('.')[-1]}"
+            is_success, im_buf_arr = cv2.imencode(ext=format, img=loaded_image)
+            im_buf_arr.tofile(path)
+        except Exception as e:
+            showerror("Ошибка", "Некорректный путь")
 
 
 def on_augmentation_algorithm_combo_selected(event):
