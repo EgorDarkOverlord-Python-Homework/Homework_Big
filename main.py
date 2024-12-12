@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter.messagebox import showerror, showwarning, showinfo
 from PIL import Image, ImageTk  # pip install pillow
 import cv2
 import numpy as np
@@ -31,10 +32,13 @@ def set_image_to_label(label, image, zoom=1):
 
 
 def resize_image(scale):
-    if loaded_image is not None:
+    try:
         global zoom
         zoom *= scale
         set_image_to_label(image_label, loaded_image, zoom)
+    except cv2.error as e:
+        if e.err == "!_src.empty()":
+            showerror("Ошибка", "Изображение не загружено")
 
 
 def on_load_image_button_click():
@@ -47,7 +51,7 @@ def on_load_image_button_click():
         ),
     )
 
-    if path:
+    try:
         global loaded_image
         loaded_image = cv2.imdecode(
             np.fromfile(path, dtype=np.uint8), cv2.IMREAD_UNCHANGED
@@ -55,49 +59,57 @@ def on_load_image_button_click():
         global zoom
         zoom = 1
         set_image_to_label(image_label, loaded_image, zoom)
+    except Exception as e:
+        showerror("Ошибка", "Некорректный путь")
 
 
 def on_do_image_button_click():
     global loaded_image
     if loaded_image is None:
+        showerror("Ошибка", "Изображение не загружено")
         return
     
     selection = augmentation_algorithm_combo.get()
-
-    if selection == NOISE_IMAGE:
-        percent = int(noise_entry.get())
-        noise_image(loaded_image, percent)
-    elif selection == DENOISE_IMAGE:
-        power = int(denoise_entry.get())
-        loaded_image = noise_filtering(loaded_image, power) 
-    elif selection == EQUALIZATION:
-        loaded_image = image_equalization(loaded_image)
-    elif selection == STATISTIC_CORRECTION:
-        loaded_image = statistic_correction(loaded_image)
-    elif selection == SCALE:
-        width = int(scale_w_entry.get())
-        height = int(scale_h_entry.get())
-        loaded_image = image_resize(loaded_image, width, height)
-    elif selection == TRANSLATION:
-        x = int(translation_x_entry.get())
-        y = int(translation_y_entry.get())
-        loaded_image = translation(loaded_image, x, y)
-    elif selection == ROTATION:
-        angle = int(rotation_entry.get())
-        loaded_image = rotation(loaded_image, angle)
-    elif selection == GLASS_EFFECT:
-        power = int(glass_effect_entry.get())
-        loaded_image = glass_effect(loaded_image, power)
-    elif selection == MOTION_BLUR:
-        power = int(motion_blur_power_entry.get())
-        angle = int(motion_blur_angle_entry.get())
-        loaded_image = motion_blur(loaded_image, power, angle)
-
-    set_image_to_label(image_label, loaded_image, zoom)
+    try:
+        if selection == NOISE_IMAGE:
+            percent = int(noise_entry.get())
+            noise_image(loaded_image, percent)
+        elif selection == DENOISE_IMAGE:
+            power = int(denoise_entry.get())
+            loaded_image = noise_filtering(loaded_image, power) 
+        elif selection == EQUALIZATION:
+            loaded_image = image_equalization(loaded_image)
+        elif selection == STATISTIC_CORRECTION:
+            loaded_image = statistic_correction(loaded_image)
+        elif selection == SCALE:
+            width = int(scale_w_entry.get())
+            height = int(scale_h_entry.get())
+            loaded_image = image_resize(loaded_image, width, height)
+        elif selection == TRANSLATION:
+            x = int(translation_x_entry.get())
+            y = int(translation_y_entry.get())
+            loaded_image = translation(loaded_image, x, y)
+        elif selection == ROTATION:
+            angle = int(rotation_entry.get())
+            loaded_image = rotation(loaded_image, angle)
+        elif selection == GLASS_EFFECT:
+            power = int(glass_effect_entry.get())
+            loaded_image = glass_effect(loaded_image, power)
+        elif selection == MOTION_BLUR:
+            power = int(motion_blur_power_entry.get())
+            angle = int(motion_blur_angle_entry.get())
+            loaded_image = motion_blur(loaded_image, power, angle)
+        else:
+            showerror("Ошибка", "Выберите способ обработки изображения")
+    
+        set_image_to_label(image_label, loaded_image, zoom)
+    except ValueError as e:
+        showerror("Ошибка", "Некорректно введённые данные")
 
 
 def on_save_image_button_click():
     if loaded_image is None:
+        showerror("Ошибка", "Изображение не загружено")
         return
     
     path = filedialog.asksaveasfilename(
@@ -109,10 +121,12 @@ def on_save_image_button_click():
         ),
     )
 
-    if path:
+    try:
         format = f".{path.split('.')[-1]}"
         is_success, im_buf_arr = cv2.imencode(ext=format, img=loaded_image)
         im_buf_arr.tofile(path)
+    except Exception as e:
+        showerror("Ошибка", "Некорректный путь")
 
 
 def on_augmentation_algorithm_combo_selected(event):
